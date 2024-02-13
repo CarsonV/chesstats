@@ -4,18 +4,19 @@ services:
     image: timescale/timescaledb:latest-pg16
     restart: always
     ports:
-      -5432:5432
+      - 5432:5432
     #networks:
       #- chess_backend
     environment:
-      - POSTRES_PASSWORD=${PG_PASS}
+      - POSTGRES_PASSWORD=${PG_PASS}
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql #initalize preset schema on container start
 
   adminer:
     image: adminer
     ports:
-      -8080:8080
+      - 8080:8080
     
 
 #networks:

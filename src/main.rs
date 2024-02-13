@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use sqlx::postgres::PgPoolOptions;
 
 #[derive(Debug, Deserialize)]
 struct Inner {
@@ -18,15 +19,21 @@ struct Resp {
 
 #[tokio::main]
 async fn main() -> Result<(), reqwest::Error> {
-    println!("Hello, world!");
 
+    let mainRes = get_lichess();
+    
+    
+    println!("{mainRes:#?}");
+
+    Ok(())
+    
+}
+
+async fn get_lichess() -> Result<Resp, reqwest::Error> {
     let res: Resp = reqwest::get("https://lichess.org/fishnet/status")
         .await?
         .json()
         .await?;
-    
-println!("{res:#?}");
 
-Ok(())
-    
+    Ok(res)
 }
