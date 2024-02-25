@@ -1,12 +1,13 @@
 use axum::extract::State;
 use axum::{routing::get, Json, Router};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use sqlx::{
     postgres::PgPoolOptions,
     types::chrono::{self, Utc},
     PgPool, Row,
 };
 use tokio::time;
+
 
 #[derive(Debug, Deserialize)]
 struct Inner {
@@ -24,6 +25,7 @@ struct Resp {
     analysis: Outer,
 }
 
+#[derive(Serialize)]
 struct FlattenedResponse {
     time: chrono::DateTime<Utc>,
     user_acquired: i32,
@@ -48,7 +50,8 @@ async fn main() {
     });
     //https://github.com/brannan/realworld-axum-sqlx/blob/main/src/http/users.rs
     let app = Router::new()
-        .route("/", get(return_user_acquired))
+        .route("/", get(last_user_acquired))
+        .route("/last", get(get_last))
         .with_state(axum_pool);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
@@ -100,18 +103,19 @@ async fn write_data(db: &PgPool, res: &Resp) -> Result<(), sqlx::Error> {
     Ok(())
 }
 //https://github.com/launchbadge/sqlx/blob/main/examples/postgres/json/src/main.rs
-/*
-async fn root(db: &PgPool) -> Json<FlattenedResponse> {
-    let response = sqlx::query_as(FlattenedResponse,
-    "SELECT * FROM FISHNET ORDER BY time LIMIT 1")
-    .fetch_one(&db)
-    .await?;
 
-    Json(response);
+async fn get_last(State(state): State<PgPool>) -> Json<FlattenedResponse> {
+    let response = sqlx::query_as!(FlattenedResponse,
+        r#"SELECT * FROM FISHNET ORDER BY time  DESC LIMIT 1"#)
+        .fetch_one(&state)
+        .await
+        .expect("Failed full last DB read");
+
+    Json(response)
 }
-*/
 
-async fn return_user_acquired(State(state): State<PgPool>) -> Json<i32> {
+
+async fn last_user_acquired(State(state): State<PgPool>) -> Json<i32> {
     let row = sqlx::query("SELECT user_acquired FROM fishnet ORDER BY time DESC LIMIT 1")
         .fetch_one(&state)
         .await
@@ -123,14 +127,6 @@ async fn return_user_acquired(State(state): State<PgPool>) -> Json<i32> {
     Json(data)
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
 /*
 TODOS
 
@@ -138,3 +134,6 @@ look at query as and return an array or vec of the last x values
 cleanup code, look into seperating out the fishnet query code and the api probably
 Still need to implement some testing, would make life easier
  */
+
+ //    r#"SELECT time AS "time!", user_acquired, user_queued, user_oldest, system_acquired, system_queued, system_oldest FROM FISHNET ORDER BY time  DESC LIMIT 1"#)
+
