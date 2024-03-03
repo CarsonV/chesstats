@@ -11,7 +11,7 @@ services:
       - POSTGRES_PASSWORD=${PG_PASS}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      #- ./db_schema.sql:/docker-entrypoint-initdb.d/db_schema.sql #initalize preset schema on container start
+      - ./dbMigrations/initialSchema.sql:/docker-entrypoint-initdb.d/initialSchema.sql #initalize preset schema on container start
 
   adminer:
     image: adminer
