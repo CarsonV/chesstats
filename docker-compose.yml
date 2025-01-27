@@ -18,9 +18,17 @@ services:
     ports:
       - 8080:8080
     
+  grafana:
+    image: grafana/grafana-oss
+    restart: unless-stopped
+    ports:
+      - 3001:3000
+    volumes: 
+      - grafanaStore:/var/lib/grafana
 
 #networks:
   #chess_backend:
 
 volumes:
   pgdata:
+  grafanaStore:
