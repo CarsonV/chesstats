@@ -73,8 +73,16 @@ async fn init_db() -> Result<PgPool, sqlx::Error> {
 
     Ok(pool)
 }
+//.expect("Lichess failed");
 async fn handle_stats(db: &PgPool) -> Result<(), sqlx::Error> {
-    let res = get_lichess().await.expect("Lichess failed");
+    let res = match get_lichess().await {
+        Ok(data) => data,
+        Err(_) => {
+            eprintln!("First request failed, trying in 2 minutes");
+            time::sleep(time::Duration::from_secs(120)).await;
+            get_lichess().await.expect("Lichess failed after retry")
+        }
+    };
     println!("{res:#?}");
     write_data(&db, &res).await.expect("DB write failed");
 
