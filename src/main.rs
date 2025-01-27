@@ -83,7 +83,7 @@ async fn handle_stats(db: &PgPool) -> Result<(), sqlx::Error> {
             get_lichess().await.expect("Lichess failed after retry")
         }
     };
-    println!("{res:#?}");
+    //println!("{res:#?}"); // used for debug outputting to console, dont need for release
     write_data(&db, &res).await.expect("DB write failed");
 
     Ok(())
